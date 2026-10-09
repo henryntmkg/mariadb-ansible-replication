@@ -1,0 +1,10 @@
+# Temporary dump files
+*.sql
+/tmp/
+
+# Sensitive inventory files with real IPs
+inventory.ini
+
+# Ansible artifacts
+*.retry
+.ansible/

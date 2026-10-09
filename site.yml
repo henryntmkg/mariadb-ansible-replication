@@ -1,0 +1,58 @@
+---
+- name: Подготовка всех узлов (Master и Slave)
+  hosts: all
+  become: true
+  tasks:
+    - name: Обновление кэша пакетов и установка Docker
+      apt:
+        name:
+          - docker.io
+          - docker-compose
+          - apparmor
+        state: present
+        update_cache: yes
+
+    - name: Создание рабочей директории
+      file:
+        path: /opt/mariadb_cluster
+        state: directory
+
+- name: Настройка Master
+  hosts: master
+  become: true
+  tasks:
+    - name: Копирование конфига Master
+      copy:
+        src: my-master.cnf
+        dest: /opt/mariadb_cluster/my.cnf
+
+    - name: Копирование docker-compose.yml
+      copy:
+        src: docker-compose.yml
+        dest: /opt/mariadb_cluster/docker-compose.yml
+
+    - name: Запуск контейнера Master
+      shell: cd /opt/mariadb_cluster && docker-compose up -d
+
+    - name: Копирование Bash-скрипта репликации
+      copy:
+        src: setup_replication.sh
+        dest: /opt/mariadb_cluster/setup_replication.sh
+        mode: '0755'
+
+- name: Настройка Slave
+  hosts: slave
+  become: true
+  tasks:
+    - name: Копирование конфига Slave
+      copy:
+        src: my-slave.cnf
+        dest: /opt/mariadb_cluster/my.cnf
+
+    - name: Копирование docker-compose.yml
+      copy:
+        src: docker-compose.yml
+        dest: /opt/mariadb_cluster/docker-compose.yml
+
+    - name: Запуск контейнера Slave
+      shell: cd /opt/mariadb_cluster && docker-compose up -d
